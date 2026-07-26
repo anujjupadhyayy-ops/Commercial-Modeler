@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commercial Modeler</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--panel:#fff;--soft:#f8fafc;
+    --accent:#2563eb;--accent2:#0ea5e9;--green:#16a34a;--amber:#d97706;--red:#dc2626;--violet:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#eef2f7;line-height:1.45}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 18px 70px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{margin:2px 0 4px;font-size:26px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14px;max-width:820px;margin:0 0 4px}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 6px}
+  .seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+  .seg button{border:0;background:transparent;padding:8px 14px;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted)}
+  .seg button.on{background:var(--accent);color:#fff}
+  select,input[type=text],input[type=number]{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--accent);padding:8px 12px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer}
+  .btn:hover{background:var(--soft)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.04);margin-bottom:16px}
+  .card h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;align-items:center;gap:6px}
+  label{display:block;font-size:12px;font-weight:600;margin:10px 0 5px;color:#334155}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:120px}
+  input,select{width:100%}
+  .rangeval{float:right;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+  input[type=range]{accent-color:var(--accent);padding:0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:6px 5px;border-bottom:1px solid var(--line)}
+  td{padding:4px 5px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td input{padding:5px 6px;font-size:12.5px;text-align:right}
+  td input.txt{text-align:left}
+  .del{border:0;background:#fee2e2;color:var(--red);border-radius:6px;width:24px;height:26px;cursor:pointer;font-size:15px;line-height:1}
+  .addbtn{margin-top:8px;border:1px dashed var(--line);background:var(--soft);color:var(--accent);padding:7px;border-radius:8px;width:100%;cursor:pointer;font-weight:600;font-size:12.5px}
+  .phase{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--soft)}
+  .phase .ph-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+  .phase .ph-head input{font-weight:700}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+  @media(max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px}
+  .kpi .k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  .kpi .v{font-size:20px;font-weight:750;margin-top:3px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .d{font-size:11px;color:var(--muted);margin-top:1px}
+  .chartbox{margin-top:8px}
+  .info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#e2e8f0;color:#475569;font-size:10px;font-weight:700;cursor:help;font-style:normal;position:relative}
+  .info:hover{background:var(--accent);color:#fff}
+  .info:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:150%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:8px 11px;border-radius:8px;font-size:11.5px;font-weight:500;line-height:1.45;width:230px;max-width:60vw;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:normal;text-align:left;font-style:normal;pointer-events:none}
+  .info:hover::before{content:'';position:absolute;left:50%;bottom:150%;transform:translateX(-50%) translateY(100%);border:6px solid transparent;border-top-color:#0f172a;z-index:100;pointer-events:none}
+  .flag{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;margin-top:6px}
+  .ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;margin-top:6px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+  .foot{margin-top:20px;font-size:11.5px;color:var(--muted)}
+  .subtle{color:var(--muted);font-size:11.5px;margin:2px 0 0}
+  .summary{display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:linear-gradient(90deg,#eff6ff,#ffffff);border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .summary .s{min-width:110px}
+  .summary .s .k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  .summary .s .v{font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .summary .rec{margin-left:auto;font-size:16px;font-weight:800;padding:9px 20px;border-radius:10px}
+  details.help{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 16px;margin:14px 0 4px}
+  details.help summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--accent);padding:11px 0;list-style:none}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:'▸  ';font-weight:800}
+  details.help[open] summary::before{content:'▾  '}
+  details.help .hbody{font-size:13px;color:#334155;line-height:1.55;padding:0 0 12px}
+  details.help .hbody b{color:var(--ink)}
+  details.help ul{margin:6px 0;padding-left:18px}
+  details.help li{margin-bottom:4px}
+  details.help .kbd{background:#eef2f7;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px;font-weight:600}
+  .prow{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid var(--line);font-size:13px}
+  .prow input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+  .prow .nm{flex:1;font-weight:600}
+  .prow .mg{font-variant-numeric:tabular-nums;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="eyebrow">Consulting Commercials · Interactive Model</span>
+  <h1>Commercial Modeler</h1>
+  <p class="sub">Price a consulting deal end to end — and know in seconds if it's worth chasing.</p>
+
+  <details class="help">
+    <summary>How to use this — 30-second orientation</summary>
+    <div class="hbody">
+      This is a live sample model of a consulting deal. Everything on screen is editable and pre-filled with example numbers — nothing is saved or sent anywhere. The <b>summary strip</b> at the top is the punchline: deal value, margin, win probability, and a <b>Pursue / Qualify / Drop</b> call.
+      <ul>
+        <li>Switch the <b>pricing model</b> (Fixed / T&amp;M / Capped) and watch how delivery-overrun risk shifts between provider and client.</li>
+        <li>Edit any <b>resource line</b> — days, cost/day, margin% — and add phases; the sell rate and margins recompute live.</li>
+        <li>Drag <b>Win probability</b> to see the recommendation move (win-likelihood is judged separately from the economics).</li>
+        <li>Add a <b>3PP item</b> to see third-party pass-through dilute blended margin below services margin.</li>
+        <li>Flip to <b>Portfolio</b> (top left) to aggregate deals and see each one's marginal effect.</li>
+      </ul>
+      Hover any <span class="info" style="cursor:help" data-tip="Like this — the circled i icons explain each field.">i</span> icon for a definition of that field.
+    </div>
+  </details>
+
+  <div class="bar">
+    <div class="seg" id="modeSeg">
+      <button data-mode="single" class="on">Single deal</button>
+      <button data-mode="portfolio">Portfolio</button>
+    </div>
+    <div id="dealPicker" style="display:flex;gap:8px;align-items:center">
+      <label style="margin:0">Deal:</label>
+      <select id="dealSel"></select>
+      <button class="btn" id="addDeal">+ Add deal</button>
+    </div>
+  </div>
+
+  <!-- SINGLE DEAL VIEW -->
+  <div id="singleView">
+    <div id="summary" class="summary"></div>
+    <div class="grid">
+      <!-- LEFT: inputs -->
+      <div>
+        <div class="card">
+          <h2>Opportunity <span class="info" data-tip="A deal being costed. A deal sits under a Product, which sits under a Portfolio. Phases live inside the deal.">i</span></h2>
+          <div class="row">
+            <div><label>Deal name</label><input type="text" id="dName"></div>
+            <div><label>Pricing model <span class="info" data-tip="T&M bills actual (billable) days. Fixed price = costed effort + margin, billed at milestones — utilisation does not apply. Capped = T&M up to a ceiling.">i</span></label>
+              <select id="dModel"><option value="fixed">Fixed price</option><option value="tm">T&amp;M</option><option value="capped">Capped T&amp;M</option></select></div>
+          </div>
+          <div class="row">
+            <div><label>Portfolio <span class="info" data-tip="Example data. In a real system this maps the deal into the portfolio P&L.">i</span></label><select id="dPortfolio"></select></div>
+            <div><label>Product</label><select id="dProduct"></select></div>
+          </div>
+          <div id="tmControls">
+            <label>Utilisation <span class="rangeval" id="utilV"></span><span class="info" data-tip="Billable ÷ paid days. Applies to T&M and Capped only. Fixed price ignores utilisation.">i</span></label>
+            <input type="range" id="dUtil" min="40" max="100">
+          </div>
+          <label>Client discount <span class="rangeval" id="discV"></span></label>
+          <input type="range" id="dDisc" min="0" max="30">
+          <label>Effort-overrun scenario <span class="rangeval" id="ovV"></span><span class="info" data-tip="Stress test: how much the delivery effort runs beyond plan. See who absorbs it under each pricing model.">i</span></label>
+          <input type="range" id="dOver" min="0" max="40">
+          <div id="capWrap" style="display:none">
+            <label>Capped ceiling <span class="rangeval" id="capV"></span></label>
+            <input type="range" id="dCap" min="100" max="140">
+          </div>
+          <label>Win probability <span class="rangeval" id="pwV"></span><span class="info" data-tip="Likelihood of winning this deal — a separate judgement from the economics. Combined with margin quality it drives the Pursue / Qualify / Drop call. Win-weighted expected margin is shown at portfolio level.">i</span></label>
+          <input type="range" id="dPwin" min="0" max="100">
+        </div>
+
+        <div class="card">
+          <h2>Phases &amp; resource lines <span class="info" data-tip="A phase belongs to this opportunity. Each line: resource type, days, cost/day and margin% — sell/day is derived (cost ÷ (1−margin)). Edit any of cost, margin or sell.">i</span></h2>
+          <div id="phases"></div>
+          <button class="addbtn" id="addPhase">+ Add phase</button>
+        </div>
+
+        <div class="card">
+          <h2>Multi-year support (AMS) <span class="info" data-tip="Recurring support annuity. Yearly revenue = retainer × (1+uplift)^(year−1).">i</span></h2>
+          <div class="row">
+            <div><label>Term (years)</label><input type="number" id="sYears" min="0" max="10"></div>
+            <div><label>Retainer / yr (£)</label><input type="number" id="sRet" min="0" step="1000"></div>
+          </div>
+          <div class="row">
+            <div><label>Annual uplift %</label><input type="number" id="sUplift" min="0" max="20" step="0.5"></div>
+            <div><label>Support cost / yr (£)</label><input type="number" id="sCost" min="0" step="1000"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Cost of Sale <span class="info" data-tip="Two distinct sub-lines, never blended: (1) Pre-Sales/BD win cost, (2) 3PP pass-through cost.">i</span></h2>
+          <label>Pre-Sales / BD cost (£) <span class="info" data-tip="Business-development / win cost for this deal.">i</span></label>
+          <input type="number" id="preSales" min="0" step="1000">
+          <label style="margin-top:12px">3PP pass-through <span class="info" data-tip="Third-party licences/subcontractors resold at a markup. Adds revenue at low margin → dilutes blended margin.">i</span></label>
+          <table><thead><tr><th>Item</th><th>Cost £</th><th>Markup %</th><th></th></tr></thead><tbody id="tpp"></tbody></table>
+          <button class="addbtn" id="addTpp">+ Add 3PP item</button>
+        </div>
+
+        <div class="card">
+          <h2>Invoicing profile <span class="info" data-tip="Milestone billing schedule for the project value. Each milestone: name, trigger event, % of sell. Must reconcile to 100%.">i</span></h2>
+          <table><thead><tr><th>Milestone</th><th>Trigger event</th><th>%</th><th></th></tr></thead><tbody id="inv"></tbody></table>
+          <button class="addbtn" id="addInv">+ Add milestone</button>
+          <div id="invFlag"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: outputs -->
+      <div>
+        <div class="card">
+          <h2>Deal economics (lifetime)</h2>
+          <div class="kpis" id="kpis"></div>
+          <div class="chartbox"><canvas id="splitChart" height="150"></canvas></div>
+          <p class="subtle" id="blendNote"></p>
+        </div>
+        <div class="card">
+          <h2>Multi-year cost vs revenue</h2>
+          <div class="chartbox"><canvas id="yearChart" height="200"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Invoicing schedule (£ of project value)</h2>
+          <table><thead><tr><th>Milestone</th><th>Trigger</th><th>%</th><th style="text-align:right">Amount</th></tr></thead><tbody id="invOut"></tbody></table>
+        </div>
+        <div class="card">
+          <h2>Phase margins</h2>
+          <table><thead><tr><th>Phase</th><th style="text-align:right">Cost</th><th style="text-align:right">Sell</th><th style="text-align:right">Margin</th></tr></thead><tbody id="phaseOut"></tbody></table>
+        </div>
+        <div class="card">
+          <h2>Insight</h2>
+          <ul id="insight" style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.5"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO VIEW -->
+  <div id="portfolioView" style="display:none">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Deals in portfolio <span class="info" data-tip="Toggle a deal on/off to see its marginal effect on the portfolio P&L.">i</span></h2>
+          <div id="pList"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h2>Portfolio P&amp;L</h2>
+          <div class="kpis" id="pKpis"></div>
+          <div class="chartbox"><canvas id="pChart" height="180"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Insight</h2>
+          <p id="pInsight" style="margin:0;font-size:13.5px"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p style="font-weight:700;color:#334155;font-size:13px;margin:0">Illustrative Sample Model — Developed with Claude · By Anuj Upadhyay</p>
+  </div>
+</div>
+
+<script>
+const DPW = 5; // working days per week basis (informational; lines are entered in days)
+const fmt = n => (n<0?'-':'') + '£' + Math.abs(Math.round(n)).toLocaleString();
+const fmtk = n => '£' + (Math.round(n/100)/10).toLocaleString() + 'k';
+const pct = n => (n*100).toFixed(1) + '%';
+const pow = (b,e)=>Math.pow(b,e);
+
+const PORTFOLIOS = {
+  'Digital Transformation':['Core Platform Rebuild','Customer Portal'],
+  'Cloud & Infrastructure':['Cloud Migration','Managed Hosting'],
+  'Data & AI':['Data Platform','AI Assistant']
+};
+
+function newDeal(name, over){
+  return Object.assign({
+    id: 'd'+Math.random().toString(36).slice(2,7),
+    name: name||'New deal', portfolio:'Digital Transformation', product:'Core Platform Rebuild',
+    model:'fixed', util:80, disc:5, over:10, cap:110, pWin:65, active:true,
+    phases:[
+      {name:'Discovery', lines:[{role:'Partner',days:10,cost:1100,margin:52},{role:'Consultant',days:30,cost:520,margin:50}]},
+      {name:'Build',     lines:[{role:'Manager',days:20,cost:800,margin:48},{role:'Developer',days:120,cost:480,margin:45},{role:'QA',days:40,cost:420,margin:44}]},
+      {name:'Test & Deploy', lines:[{role:'PM',days:25,cost:700,margin:47},{role:'Engineering',days:35,cost:520,margin:46}]}
+    ],
+    support:{years:3, retainer:60000, uplift:5, costPerYear:40000},
+    tpp:[{desc:'Software licences',cost:50000,markup:10}],
+    preSales:15000,
+    invoicing:[
+      {name:'Contract signature',trigger:'On contract signature',pct:5},
+      {name:'Software handover',trigger:'On software handover',pct:45},
+      {name:'3PP delivery',trigger:'On 3PP delivery',pct:20},
+      {name:'Customer sign-off',trigger:'On customer sign-off',pct:30}
+    ]
+  }, over||{});
+}
+
+let deals = [ newDeal('Core Platform Rebuild'),
+  Object.assign(newDeal('Customer Portal — Phase 1',{product:'Customer Portal',model:'tm',pWin:45}),{}),
+  Object.assign(newDeal('Cloud Migration (3PP-heavy)',{portfolio:'Cloud & Infrastructure',product:'Cloud Migration'}),
+    {tpp:[{desc:'Cloud licences',cost:180000,markup:8},{desc:'Subcontractor',cost:90000,markup:12}], preSales:22000, pWin:55})
+];
+let mode='single';
+let curId = deals[0].id;
+const cur = () => deals.find(d=>d.id===curId);
+
+// ---------- calc engine (pure) ----------
+function lineSell(l){ const m=Math.min(l.margin,99)/100; return m>=1?0:l.cost/(1-m); }
+function calc(d){
+  let buildCost=0, buildSellFull=0, buildDays=0;
+  d.phases.forEach(p=>p.lines.forEach(l=>{
+    buildCost += l.days*l.cost;
+    buildSellFull += l.days*lineSell(l);
+    buildDays += l.days;
+  }));
+  const util = d.util/100, disc=d.disc/100, o=d.over/100;
+  const useUtil = (d.model!=='fixed');
+  const billableDays = useUtil ? buildDays*util : buildDays;
+  // base build revenue (at overrun 0), per model
+  let buildRevBase;
+  if(d.model==='tm')      buildRevBase = buildSellFull*util*(1-disc);
+  else if(d.model==='capped') buildRevBase = buildSellFull*util*(1-disc);
+  else                    buildRevBase = buildSellFull*(1-disc); // fixed: full effort, no util
+  // apply overrun by model
+  let buildRev, buildCostO=buildCost*(1+o);
+  if(d.model==='tm') buildRev = buildRevBase*(1+o);
+  else if(d.model==='fixed') buildRev = buildRevBase;
+  else { const capVal = buildRevBase*(d.cap/100); buildRev = Math.min(buildRevBase*(1+o), capVal); }
+
+  // support
+  const s=d.support; let supRev=0; const supByYear=[];
+  for(let y=1;y<=s.years;y++){ const r=s.retainer*pow(1+s.uplift/100,y-1); supRev+=r; supByYear.push(r); }
+  const supCost = s.costPerYear*s.years;
+
+  // 3PP
+  let tppRev=0,tppCost=0; d.tpp.forEach(t=>{ tppRev+=t.cost*(1+t.markup/100); tppCost+=t.cost; });
+  const tppMargin = tppRev-tppCost;
+
+  // CoS / CoD / TCV
+  const preSales = d.preSales;
+  const CoS = preSales + tppCost;
+  const CoD = buildCostO + supCost;
+  const servicesRev = buildRev + supRev;
+  const TCV = servicesRev + tppRev;
+  const totalCost = CoD + CoS;
+  const margin = TCV - totalCost;
+  const marginPct = TCV? margin/TCV : 0;
+  const servicesMargin = servicesRev - (buildCostO+supCost) - preSales;
+  const servicesMarginPct = servicesRev? servicesMargin/servicesRev : 0;
+  const blendedRate = billableDays? buildRev/billableDays : 0;
+  const expMargin = margin*((d.pWin||0)/100), expTCV = TCV*((d.pWin||0)/100);
+
+  return {buildCost:buildCostO, buildRev, buildDays, billableDays, buildSellFull,
+    supRev, supCost, supByYear, tppRev, tppCost, tppMargin, preSales,
+    CoS, CoD, servicesRev, TCV, totalCost, margin, marginPct, servicesMargin, servicesMarginPct, blendedRate, expMargin, expTCV};
+}
+function projectValue(d){ // value the invoicing % applies to = build services revenue
+  return calc(d).buildRev;
+}
+
+// ---------- example dropdown wiring ----------
+function fillPortfolioSel(sel, val){
+  sel.innerHTML = Object.keys(PORTFOLIOS).map(p=>`<option${p===val?' selected':''}>${p}</option>`).join('');
+}
+function fillProductSel(sel, portfolio, val){
+  const list = PORTFOLIOS[portfolio]||[];
+  sel.innerHTML = list.map(p=>`<option${p===val?' selected':''}>${p}</option>`).join('');
+}
+
+// ---------- rendering: structure ----------
+function renderDealSel(){
+  document.getElementById('dealSel').innerHTML = deals.map(d=>`<option value="${d.id}"${d.id===curId?' selected':''}>${d.name}</option>`).join('');
+}
+function renderStructure(){
+  const d=cur();
+  document.getElementById('dName').value=d.name;
+  document.getElementById('dModel').value=d.model;
+  fillPortfolioSel(document.getElementById('dPortfolio'), d.portfolio);
+  fillProductSel(document.getElementById('dProduct'), d.portfolio, d.product);
+  document.getElementById('dUtil').value=d.util;
+  document.getElementById('dDisc').value=d.disc;
+  document.getElementById('dOver').value=d.over;
+  document.getElementById('dCap').value=d.cap;
+  document.getElementById('dPwin').value=d.pWin;
+  document.getElementById('capWrap').style.display = d.model==='capped'?'block':'none';
+  document.getElementById('tmControls').style.display = d.model==='fixed'?'none':'block';
+
+  // phases
+  document.getElementById('phases').innerHTML = d.phases.map((p,pi)=>`
+    <div class="phase">
+      <div class="ph-head">
+        <input class="txt" data-k="phaseName" data-p="${pi}" value="${p.name}" style="flex:1">
+        <button class="del" data-delphase="${pi}">×</button>
+      </div>
+      <table><thead><tr><th>Resource</th><th>Days</th><th>Cost/day</th><th>Margin%</th><th>Sell/day</th><th></th></tr></thead>
+      <tbody>${p.lines.map((l,li)=>`
+        <tr>
+          <td><input class="txt" data-k="role" data-p="${pi}" data-l="${li}" value="${l.role}"></td>
+          <td><input type="number" min="0" data-k="days" data-p="${pi}" data-l="${li}" value="${l.days}" style="width:56px"></td>
+          <td><input type="number" min="0" data-k="cost" data-p="${pi}" data-l="${li}" value="${l.cost}" style="width:66px"></td>
+          <td><input type="number" min="0" max="99" data-k="margin" data-p="${pi}" data-l="${li}" value="${l.margin}" style="width:56px"></td>
+          <td><input type="number" min="0" data-k="sell" data-p="${pi}" data-l="${li}" value="${Math.round(lineSell(l))}" style="width:66px"></td>
+          <td><button class="del" data-delline="${pi}-${li}">×</button></td>
+        </tr>`).join('')}</tbody></table>
+      <button class="addbtn" data-addline="${pi}">+ Add resource line</button>
+    </div>`).join('');
+
+  document.getElementById('sYears').value=d.support.years;
+  document.getElementById('sRet').value=d.support.retainer;
+  document.getElementById('sUplift').value=d.support.uplift;
+  document.getElementById('sCost').value=d.support.costPerYear;
+  document.getElementById('preSales').value=d.preSales;
+
+  document.getElementById('tpp').innerHTML = d.tpp.map((t,ti)=>`
+    <tr>
+      <td><input class="txt" data-k="tppDesc" data-t="${ti}" value="${t.desc}"></td>
+      <td><input type="number" min="0" data-k="tppCost" data-t="${ti}" value="${t.cost}" style="width:80px"></td>
+      <td><input type="number" min="0" data-k="tppMarkup" data-t="${ti}" value="${t.markup}" style="width:56px"></td>
+      <td><button class="del" data-deltpp="${ti}">×</button></td>
+    </tr>`).join('');
+
+  document.getElementById('inv').innerHTML = d.invoicing.map((m,mi)=>`
+    <tr>
+      <td><input class="txt" data-k="invName" data-i="${mi}" value="${m.name}"></td>
+      <td><input class="txt" data-k="invTrig" data-i="${mi}" value="${m.trigger}"></td>
+      <td><input type="number" min="0" max="100" data-k="invPct" data-i="${mi}" value="${m.pct}" style="width:54px"></td>
+      <td><button class="del" data-delinv="${mi}">×</button></td>
+    </tr>`).join('');
+
+  renderOutputs();
+}
+
+// ---------- rendering: outputs ----------
+let splitChart, yearChart, pChart;
+function renderOutputs(){
+  const d=cur(); const c=calc(d);
+  const modelName={fixed:'Fixed price',tm:'T&M',capped:'Capped T&M'}[d.model];
+  document.getElementById('utilV').textContent=d.util+'%';
+  document.getElementById('discV').textContent=d.disc+'%';
+  document.getElementById('ovV').textContent=d.over+'%';
+  document.getElementById('capV').textContent=d.cap+'%';
+  document.getElementById('pwV').textContent=d.pWin+'%';
+
+  // summary strip — decision punchline: margin quality × winnability → Pursue / Qualify / Drop
+  // (two independent axes; deal economics stay deterministic, win-likelihood stays a separate judgement)
+  const mq=c.marginPct>=0.25?'high':(c.marginPct>=0.15?'medium':'low');
+  const wn=d.pWin>=60?'high':(d.pWin>=40?'medium':'low');
+  let rec;
+  if(c.marginPct<0.15) rec='Drop';
+  else if(c.marginPct>=0.25) rec=d.pWin>=50?'Pursue':'Qualify';
+  else rec=d.pWin>=60?'Pursue':(d.pWin>=40?'Qualify':'Drop');
+  let recCol,recBg;
+  if(rec==='Pursue'){recCol='#15803d';recBg='#dcfce7';}
+  else if(rec==='Qualify'){recCol='#b45309';recBg='#fef3c7';}
+  else {recCol='#b91c1c';recBg='#fee2e2';}
+  const mcol=c.marginPct<0.15?'var(--red)':(c.marginPct<0.3?'var(--amber)':'var(--green)');
+  document.getElementById('summary').innerHTML=
+    `<div class="s"><div class="k">TCV · lifetime</div><div class="v">${fmtk(c.TCV)}</div></div>`+
+    `<div class="s"><div class="k">Lifetime margin</div><div class="v" style="color:${mcol}">${pct(c.marginPct)}</div></div>`+
+    `<div class="s"><div class="k">Win probability</div><div class="v">${d.pWin}%</div></div>`+
+    `<div class="rec" style="background:${recBg};color:${recCol}">${rec}<div style="font-size:10px;font-weight:700;opacity:.85;margin-top:2px">margin ${mq} · win ${wn}</div></div>`;
+
+  const kpi=(k,v,dd,col)=>`<div class="kpi"><div class="k">${k}</div><div class="v" style="color:${col||'var(--ink)'}">${v}</div><div class="d">${dd}</div></div>`;
+  document.getElementById('kpis').innerHTML =
+    kpi('TCV (lifetime)', fmtk(c.TCV), modelName)+
+    kpi('Lifetime margin', pct(c.marginPct), fmtk(c.margin), c.marginPct<0.15?'var(--red)':(c.marginPct<0.3?'var(--amber)':'var(--green)'))+
+    kpi('Blended rate', fmt(c.blendedRate)+'/d', 'build services')+
+    kpi('CoD', fmtk(c.CoD), 'delivery cost')+
+    kpi('CoS · Pre-Sales', fmtk(c.preSales), 'win cost')+
+    kpi('CoS · 3PP', fmtk(c.tppCost), 'pass-through');
+
+  // split chart (stacked composition of TCV)
+  const segs = {labels:['TCV composition'], datasets:[
+    {label:'CoD (delivery)', data:[c.CoD], backgroundColor:'#94a3b8'},
+    {label:'CoS · Pre-Sales', data:[c.preSales], backgroundColor:'#f59e0b'},
+    {label:'CoS · 3PP', data:[c.tppCost], backgroundColor:'#c084fc'},
+    {label:'Margin', data:[Math.max(0,c.margin)], backgroundColor: c.margin<0?'#dc2626':'#16a34a'}
+  ]};
+  if(!splitChart){
+    splitChart=new Chart(document.getElementById('splitChart'),{type:'bar',data:segs,
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},
+          tooltip:{callbacks:{label:x=>x.dataset.label+': '+fmt(x.parsed.x)}}},
+        scales:{x:{stacked:true,ticks:{callback:v=>'£'+(v/1000)+'k',font:{size:10}},grid:{color:'#f1f5f9'}},y:{stacked:true,grid:{display:false}}}}});
+  } else { splitChart.data=segs; splitChart.update(); }
+  document.getElementById('blendNote').textContent =
+    `Services margin ${pct(c.servicesMarginPct)} → blended ${pct(c.marginPct)} after £${Math.round(c.tppRev).toLocaleString()} of 3PP revenue at £${Math.round(c.tppMargin).toLocaleString()} margin.`;
+
+  // multi-year chart
+  const yLabels=['Build'], yRev=[c.buildRev], yCost=[c.buildCost];
+  c.supByYear.forEach((r,i)=>{ yLabels.push('Support Y'+(i+1)); yRev.push(r); yCost.push(d.support.costPerYear); });
+  let cum=0; const cumM = yRev.map((r,i)=>{ cum += (r-yCost[i]); return Math.round(cum); });
+  const yData={labels:yLabels, datasets:[
+    {type:'bar',label:'Revenue',data:yRev.map(x=>Math.round(x)),backgroundColor:'#0ea5e9',borderRadius:5,order:2},
+    {type:'bar',label:'Cost',data:yCost.map(x=>Math.round(x)),backgroundColor:'#cbd5e1',borderRadius:5,order:2},
+    {type:'line',label:'Cumulative margin',data:cumM,borderColor:'#16a34a',backgroundColor:'#16a34a',tension:.2,borderWidth:2,pointRadius:2,order:1}
+  ]};
+  if(!yearChart){
+    yearChart=new Chart(document.getElementById('yearChart'),{data:yData,
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},
+          tooltip:{callbacks:{label:x=>x.dataset.label+': '+fmt(x.parsed.y)}}},
+        scales:{y:{ticks:{callback:v=>'£'+(v/1000)+'k',font:{size:10}},grid:{color:'#f1f5f9'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  } else { yearChart.data=yData; yearChart.update(); }
+
+  // invoicing schedule + validation
+  const sum=d.invoicing.reduce((s,m)=>s+(+m.pct||0),0);
+  const pv=c.buildRev;
+  document.getElementById('invOut').innerHTML = d.invoicing.map(m=>`
+    <tr><td>${m.name}</td><td style="color:var(--muted)">${m.trigger}</td><td>${m.pct}%</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(pv*m.pct/100)}</td></tr>`).join('')
+    + `<tr><td style="font-weight:700">Total</td><td></td><td style="font-weight:700">${sum}%</td><td style="text-align:right;font-weight:700">${fmt(pv*sum/100)}</td></tr>`;
+  document.getElementById('invFlag').innerHTML = sum===100
+    ? `<div class="ok">Invoicing profile reconciles to 100%.</div>`
+    : `<div class="flag">Invoicing profile sums to ${sum}% — must reconcile to 100%.</div>`;
+
+  // phase margins
+  document.getElementById('phaseOut').innerHTML = d.phases.map(p=>{
+    let pc=0,ps=0; p.lines.forEach(l=>{pc+=l.days*l.cost; ps+=l.days*lineSell(l);});
+    const pm = ps? (ps-pc)/ps : 0;
+    return `<tr><td>${p.name}</td><td style="text-align:right">${fmt(pc)}</td><td style="text-align:right">${fmt(ps)}</td>
+      <td style="text-align:right;color:${pm<0.3?'var(--amber)':'var(--green)'}">${pct(pm)}</td></tr>`;
+  }).join('');
+
+  // insight (bulleted)
+  const modelPt = {
+    fixed:`<b>Fixed price:</b> the ${fmt(c.buildRev)} project value is billed across your milestones, but a ${d.over}% effort overrun lands entirely on you — revenue holds flat while cost rises to ${fmt(c.buildCost)}. Estimation discipline protects this margin.`,
+    tm:`<b>T&amp;M:</b> revenue tracks billable days, so a ${d.over}% overrun lifts revenue with cost and margin holds near ${pct(c.marginPct)} — the client carries the overrun risk.`,
+    capped:`<b>Capped T&amp;M:</b> you bill actuals up to the ${d.cap}% ceiling, then absorb the rest — a middle ground that protects the client's budget while giving you upside within the cap.`
+  }[d.model];
+  const pts = [
+    modelPt,
+    `<b>3PP dilution:</b> ${fmt(c.tppRev)} of pass-through revenue at only ${fmt(c.tppMargin)} margin drags blended margin below services margin (${pct(c.servicesMarginPct)} → ${pct(c.marginPct)}).`,
+    `<b>Lifetime shape:</b> ${fmt(c.buildRev)} build + ${fmt(c.supRev)} support over ${d.support.years} yrs = ${fmtk(c.TCV)} TCV; the support annuity is ${(c.servicesRev? (c.supRev/c.servicesRev*100):0).toFixed(0)}% of services revenue.`
+  ];
+  document.getElementById('insight').innerHTML = pts.map(p=>`<li style="margin-bottom:6px">${p}</li>`).join('');
+}
+
+// ---------- portfolio ----------
+function renderPortfolio(){
+  const active = deals.filter(d=>d.active);
+  document.getElementById('pList').innerHTML = deals.map(d=>{
+    const c=calc(d);
+    return `<div class="prow">
+      <input type="checkbox" data-toggle="${d.id}" ${d.active?'checked':''}>
+      <span class="nm">${d.name}</span>
+      <span class="pill" style="background:${d.portfolio==='Cloud & Infrastructure'?'#ede9fe':'#dbeafe'};color:#334155">${d.product}</span>
+      <span class="mg">${fmtk(c.TCV)} · ${pct(c.marginPct)} · ${d.pWin}% win</span>
+    </div>`;
+  }).join('');
+
+  let TCV=0,cost=0,margin=0,expM=0; active.forEach(d=>{const c=calc(d);TCV+=c.TCV;cost+=c.totalCost;margin+=c.margin;expM+=c.expMargin;});
+  const mp = TCV? margin/TCV:0;
+  const kpi=(k,v,dd,col)=>`<div class="kpi"><div class="k">${k}</div><div class="v" style="color:${col||'var(--ink)'}">${v}</div><div class="d">${dd}</div></div>`;
+  document.getElementById('pKpis').innerHTML =
+    kpi('Portfolio TCV', fmtk(TCV), active.length+' deals')+
+    kpi('Portfolio margin', pct(mp), fmtk(margin), mp<0.2?'var(--amber)':'var(--green)')+
+    kpi('Expected margin', fmtk(expM), 'weighted by win %', 'var(--accent)')+
+    kpi('Portfolio cost', fmtk(cost), 'CoD + CoS');
+
+  const data={labels:active.map(d=>d.name), datasets:[
+    {label:'Margin', data:active.map(d=>Math.round(calc(d).margin)), backgroundColor:'#16a34a', borderRadius:5, stack:'s'},
+    {label:'Cost', data:active.map(d=>Math.round(calc(d).totalCost)), backgroundColor:'#cbd5e1', borderRadius:5, stack:'s'}
+  ]};
+  if(!pChart){
+    pChart=new Chart(document.getElementById('pChart'),{type:'bar',data,
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},tooltip:{callbacks:{label:x=>x.dataset.label+': '+fmt(x.parsed.y)}}},
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9},maxRotation:25}},y:{stacked:true,ticks:{callback:v=>'£'+(v/1000)+'k',font:{size:10}},grid:{color:'#f1f5f9'}}}}});
+  } else { pChart.data=data; pChart.update(); }
+
+  // marginal effect of the lowest-margin active deal
+  let note='Toggle deals on and off to see each one’s marginal effect on portfolio margin.';
+  if(active.length>1){
+    const worst=[...active].sort((a,b)=>calc(a).marginPct-calc(b).marginPct)[0];
+    const without = active.filter(d=>d.id!==worst.id);
+    let t2=0,m2=0; without.forEach(d=>{const c=calc(d);t2+=c.TCV;m2+=c.margin;});
+    const mp2=t2?m2/t2:0;
+    note=`Removing “${worst.name}” (${pct(calc(worst).marginPct)} margin) moves portfolio margin ${pct(mp)} → ${pct(mp2)}. A large deal is not automatically accretive to the portfolio.`;
+  }
+  document.getElementById('pInsight').textContent=note;
+}
+
+// ---------- events ----------
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); mode=b.dataset.mode;
+  const p = mode==='portfolio';
+  document.getElementById('portfolioView').style.display = p?'block':'none';
+  document.getElementById('singleView').style.display = p?'none':'block';
+  document.getElementById('dealPicker').style.display = p?'none':'flex';
+  if(p) renderPortfolio(); else renderStructure();
+});
+document.getElementById('dealSel').onchange=e=>{ curId=e.target.value; renderStructure(); };
+document.getElementById('addDeal').onclick=()=>{ const d=newDeal('New deal '+(deals.length+1)); deals.push(d); curId=d.id; renderDealSel(); renderStructure(); };
+
+// deal meta
+document.getElementById('dName').oninput=e=>{ cur().name=e.target.value; renderDealSel(); };
+document.getElementById('dModel').onchange=e=>{ cur().model=e.target.value; renderStructure(); };
+document.getElementById('dPortfolio').onchange=e=>{ const d=cur(); d.portfolio=e.target.value; d.product=PORTFOLIOS[d.portfolio][0]; renderStructure(); };
+document.getElementById('dProduct').onchange=e=>{ cur().product=e.target.value; };
+['dUtil','dDisc','dOver','dCap','dPwin'].forEach(id=>{
+  document.getElementById(id).oninput=e=>{ const k={dUtil:'util',dDisc:'disc',dOver:'over',dCap:'cap',dPwin:'pWin'}[id]; cur()[k]=+e.target.value; renderOutputs(); };
+});
+// support / presales
+const numBind=(id,fn)=>document.getElementById(id).oninput=e=>{ fn(+e.target.value||0); renderOutputs(); };
+numBind('sYears',v=>cur().support.years=Math.max(0,Math.min(10,Math.round(v))));
+numBind('sRet',v=>cur().support.retainer=v);
+numBind('sUplift',v=>cur().support.uplift=v);
+numBind('sCost',v=>cur().support.costPerYear=v);
+numBind('preSales',v=>cur().preSales=v);
+
+// delegated inputs (phases, tpp, inv)
+document.body.addEventListener('input',e=>{
+  const t=e.target, k=t.dataset.k; if(!k) return;
+  const d=cur();
+  if(k==='phaseName'){ d.phases[+t.dataset.p].name=t.value; renderOutputs(); return; }
+  if(['role','days','cost','margin','sell'].includes(k)){
+    const l=d.phases[+t.dataset.p].lines[+t.dataset.l];
+    if(k==='role'){ l.role=t.value; return; }
+    const v=Math.max(0,+t.value||0);
+    if(k==='days') l.days=v;
+    else if(k==='cost'){ l.cost=v; }
+    else if(k==='margin'){ l.margin=Math.min(99,v); }
+    else if(k==='sell'){ l.margin = v>0? Math.max(0,Math.min(99,(1-l.cost/v)*100)) : 0; }
+    // sync sibling display without full re-render
+    const row=t.closest('tr');
+    if(k!=='margin') row.querySelector('[data-k="margin"]').value=Math.round(l.margin);
+    if(k!=='sell') row.querySelector('[data-k="sell"]').value=Math.round(lineSell(l));
+    if(k==='sell'){} // leave sell as typed
+    renderOutputs(); return;
+  }
+  if(k==='tppDesc'){ d.tpp[+t.dataset.t].desc=t.value; return; }
+  if(k==='tppCost'){ d.tpp[+t.dataset.t].cost=Math.max(0,+t.value||0); renderOutputs(); return; }
+  if(k==='tppMarkup'){ d.tpp[+t.dataset.t].markup=Math.max(0,+t.value||0); renderOutputs(); return; }
+  if(k==='invName'){ d.invoicing[+t.dataset.i].name=t.value; renderOutputs(); return; }
+  if(k==='invTrig'){ d.invoicing[+t.dataset.i].trigger=t.value; renderOutputs(); return; }
+  if(k==='invPct'){ d.invoicing[+t.dataset.i].pct=Math.max(0,Math.min(100,+t.value||0)); renderOutputs(); return; }
+});
+// delegated clicks (add/remove + portfolio toggle)
+document.body.addEventListener('click',e=>{
+  const t=e.target, d=cur();
+  if(t.dataset.delphase!==undefined){ d.phases.splice(+t.dataset.delphase,1); renderStructure(); }
+  else if(t.dataset.addline!==undefined){ d.phases[+t.dataset.addline].lines.push({role:'New role',days:10,cost:500,margin:45}); renderStructure(); }
+  else if(t.dataset.delline!==undefined){ const [p,l]=t.dataset.delline.split('-').map(Number); d.phases[p].lines.splice(l,1); renderStructure(); }
+  else if(t.id==='addPhase'){ d.phases.push({name:'New phase',lines:[{role:'Consultant',days:20,cost:520,margin:48}]}); renderStructure(); }
+  else if(t.id==='addTpp'){ d.tpp.push({desc:'New 3PP item',cost:10000,markup:10}); renderStructure(); }
+  else if(t.dataset.deltpp!==undefined){ d.tpp.splice(+t.dataset.deltpp,1); renderStructure(); }
+  else if(t.id==='addInv'){ d.invoicing.push({name:'New milestone',trigger:'On event',pct:0}); renderStructure(); }
+  else if(t.dataset.delinv!==undefined){ d.invoicing.splice(+t.dataset.delinv,1); renderStructure(); }
+  else if(t.dataset.toggle!==undefined){ const dd=deals.find(x=>x.id===t.dataset.toggle); dd.active=t.checked; renderPortfolio(); }
+});
+
+// init
+renderDealSel();
+renderStructure();
+</script>
+</body>
+</html>
