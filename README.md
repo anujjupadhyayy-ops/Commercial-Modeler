@@ -46,11 +46,6 @@ blended rate    = build revenue ÷ billable days       (single average £/day)
 expected margin = margin × win probability            (portfolio view only)
 ```
 
-## Running & deploying
-
-**Locally:** open `commercial-modeler.html` in any modern browser — no build step, no server.
-
-**On GitHub Pages:** push the file to a repo → Settings → Pages → deploy from `main` (root). Live at `https://<username>.github.io/<repo>/commercial-modeler.html` (rename to `index.html` for a clean root URL).
 
 ## Technical notes
 
